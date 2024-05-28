@@ -40,7 +40,6 @@ loader.onLoadEnd(resources => {
 })
 
 /** Load process end */
-
 window.addEventListener('resize', () => {
     global.width = window.innerWidth
     global.height = window.innerHeight

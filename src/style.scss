@@ -23,9 +23,13 @@ button {
     z-index: 99;
     width: 100vw;
     height: 100vh;
-    background-image: linear-gradient(#ca7c3e, #ca7c3e);
+    background-image: linear-gradient(#ebc5a4, #dd967b);
+
+    // background-image: linear-gradient(#3d3c3f, #39393c);
     canvas {
         display: block;
+        width: 100%!important;
+        height: 100%!important;
     }
 }
 .actions {

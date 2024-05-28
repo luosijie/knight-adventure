@@ -1,22 +1,15 @@
-import { AxesHelper, Clock, Fog, Group, Mesh, MeshBasicMaterial, Scene, SRGBColorSpace, Texture, Vector3, WebGLRenderer } from 'three'
-
-import matcapMaterial from '@/materials/matcap'
+import { AmbientLight, ArrowHelper, AxesHelper, Clock, DirectionalLight, Fog, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PCFSoftShadowMap, Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from 'three'
+import Stats from 'stats.js'
 
 import Camera from './Camera'
 
-import Coin from './Coin'
-
-import configLanters from '@/config/lanterns'
-import configTrees from '@/config/trees'
-import configGolds from '@/config/golds'
-import Loong from './Loong'
 import Player from './Player'
+import Skeleton from './Skeleton'
 
 import Global from './Global'
 import Controls from './Controls'
-import Door from './Door'
-import setMatcapMaterial from '@/utils/setMatcapMaterial'
-import groundMaterial from '@/materials/groundMaterial'
+import createDefaultMaterial from '@/materials/createDefaultMaterial'
+import { Pathfinding, PathfindingHelper } from 'three-pathfinding'
 const global = Global.getInstance()
 
 // import Sound from './Sound'
@@ -30,65 +23,97 @@ export default class World {
 
     clock: Clock
 
-
+   
     canvas: HTMLCanvasElement
     renderer: WebGLRenderer
     scene: Scene
 
     controls: Controls
+    raycaster: Raycaster
 
     camera: Camera
 
+    stats: Stats
+
     fog: Fog
+   
+    pathfinding: Pathfinding
+    pathfindingHelper: PathfindingHelper
+    navmesh: Mesh
     // sound: Sound
 
-
-    coin: Coin
-    door: Door
-
-    loong: Loong
+    light: DirectionalLight
+    ambientLight: AmbientLight
 
     player: Player
+    skeleton: Skeleton
 
-    navmesh: Group
+    points: Array<ArrowHelper>
 
     constructor (canvas: HTMLCanvasElement, resources: any) {
+
         this.isReady = false
         this.isActive = false
 
-        this.width = window.innerWidth
-        this.height = window.innerWidth
         this.canvas = canvas
 
         this.clock = new Clock()
 
+        this.stats = new Stats()
+
         this.renderer = this.createRenderer()
         this.scene = new Scene()
 
+        this.navmesh = new Mesh()
+        this.pathfinding = new Pathfinding()
+        this.pathfindingHelper = new PathfindingHelper()
         this.controls = new Controls()
+        this.raycaster = new Raycaster()
 
-        this.player = new Player(resources)
+        this.player = new Player(resources['model-knight'], resources['texture-kight'])
+        this.skeleton = new Skeleton(resources['model-skeleton'], resources['texture-skeleton'])
+        
+        this.camera = new Camera(global.width, global.height)
 
-        this.camera = new Camera(this.width, this.height)
+        this.light = this.createLight()
 
-        this.navmesh = this.createNavmesh(resources['model-navmesh'])
-    
+        this.ambientLight = new AmbientLight('#ffffff', 2.5)
 
-        this.coin = new Coin()
-        this.door = new Door(resources)
-
-        this.loong = new Loong()
         
         this.build(resources)
         this.init()
         
     }
 
+
+    private createLight () {
+        const light = new DirectionalLight('#ffffff', 1.)
+        light.position.set(1, 3, -1)
+        light.castShadow = true
+        light.shadow.mapSize.width = 512
+        light.shadow.mapSize.height = 512
+        light.shadow.autoUpdate = true
+        light.shadow.camera.near = .1
+        light.shadow.camera.far = 5000
+
+        return light
+    }
+
     private init () { 
-        this.scene.add(this.door.group)
-        this.scene.add(this.loong.group)
+        this.stats.showPanel(0)
+        document.body.appendChild(this.stats.dom)
+
+        this.player.main.position.x = -1
+        this.skeleton.main.position.x = 2
+
+        this.scene.add(this.pathfindingHelper)
+
+        this.scene.add(this.light)
+        this.scene.add(this.ambientLight)
         this.scene.add(this.player.main)
-        this.scene.add(this.navmesh)
+        this.scene.add(this.skeleton.main)
+
+        this.initControls()
 
         if (global.isDev) {
             const axesHelper = new AxesHelper(50)
@@ -96,19 +121,30 @@ export default class World {
         }
     }
 
-    private createNavmesh(model: any) {
-        model.scene.traverse((e:any) => {
-            if (e instanceof Mesh) {
-                e.material.transparent = true
-                e.material.opacity = 0
+    private initControls() {
+        // Contex Menu
+        window.addEventListener('contextmenu', (evt:MouseEvent) => {
+            evt.preventDefault()
+            const pointer = new Vector2(
+                (evt.clientX / global.width) * 2 - 1,
+                1 - (evt.clientY / global.height) * 2
+            )
+            this.raycaster.setFromCamera(pointer, this.camera.perspective)
+            
+            const intersets = this.raycaster.intersectObject(this.navmesh)
+          
+            if (intersets && intersets.length) {
+
+                const p = intersets[0].point
+                const path = this.findPath(this.player.main.position, p)
+                console.log('path', path)
+
 
             }
+            // console.log(evt)
         })
-
-        // mesh.material.transparent = true
-        // mesh.material.opacity = 0
-        return model.scene
     }
+
 
     private createRenderer () {
         const renderer = new WebGLRenderer({ 
@@ -116,10 +152,13 @@ export default class World {
             antialias: true,  
             alpha: true 
         })
-        renderer.setSize( this.width, this.height)
+        renderer.setSize( global.width, global.height)
         renderer.setAnimationLoop( this.render.bind(this) )
-        renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+        renderer.setPixelRatio(global.pixelRatio)
         renderer.outputColorSpace = SRGBColorSpace
+
+        renderer.shadowMap.enabled = true
+        renderer.shadowMap.type = PCFSoftShadowMap
         // renderer.out
 
         // renderer.outputEncoding = sRGBEncoding
@@ -129,14 +168,18 @@ export default class World {
     // Passed to renderer.setAnimationLoop
     private render () {
         // const delta = this.clock.getDelta()
+        this.stats.update()
+
         const elapsedTime = this.clock.getElapsedTime()
 
 
         this.controls.update()
-        this.loong.update()
-        this.coin.update(elapsedTime)
 
-        this.player.update(this.navmesh, this.door)
+        this.navmesh && this.player.update(this.navmesh)
+        this.skeleton.update()
+
+        // this.findPath(this.player.main.position, this.skeleton.main.position)
+
         this.camera.update(this.player, this.controls)
         
 
@@ -144,107 +187,60 @@ export default class World {
 
     }
 
+    findPath (a: Vector3, b: Vector3) {
+        if (!this.navmesh) return
+
+
+        const ZONE = 'level'
+        this.pathfinding.setZoneData(ZONE, Pathfinding.createZone(this.navmesh.geometry))
+        
+        const groupId = this.pathfinding.getGroup(ZONE, a)
+        const groupIdB = this.pathfinding.getGroup(ZONE, b)
+        const clostA = this.pathfinding.getClosestNode(a, ZONE, groupId)
+        const clostB = this.pathfinding.getClosestNode(b, ZONE, groupId)
+
+        console.log(groupId, groupIdB)
+
+        const path = this.pathfinding.findPath(a, b, ZONE, groupId)
+        
+
+        this.pathfindingHelper.reset()
+        this.pathfindingHelper.setPlayerPosition(a)
+        this.pathfindingHelper.setTargetPosition(b)
+        this.pathfindingHelper.setPath(path)
+
+        return path
+    }
+
     // Build world elements with resources
     build (resources: any) {
+        const sceneModel = resources['model-scene'].scene
+        const sceneTexture = resources['texture-scene']
+        sceneTexture.flipY = false   
+        sceneTexture.colorSpace = SRGBColorSpace
 
-        console.log(resources)
-        // set main
-        const modelMain = resources['model-main'].scene
-        modelMain.traverse((e:any) => {
-            if (e.name === 'main') {
-                const textureMain: Texture = resources['texture-main']
-                textureMain.flipY = false   
-                textureMain.colorSpace = SRGBColorSpace
-                
-                const mainMaterial = new MeshBasicMaterial({
-                    map: textureMain
-                })
-                e.material = mainMaterial
-            }
+        const defaultMaterial = createDefaultMaterial(sceneTexture)
+       
+        sceneModel.traverse((e: any) => {
+            if (e instanceof Mesh) {
+                // Set navmesh
+                if (e.name === 'Navmesh') {
+                    this.navmesh = e
+                    // this.navmesh.position.z = 0.1
 
-            if (e.name === 'ground') {
-                // set ground
-                const textureGround: Texture = resources['texture-ground']
-                textureGround.flipY = false   
-                // textureGround.colorSpace = SRGBColorSpace
-                
-                const material = groundMaterial(textureGround)
-                e.position.z = .003
-                e.material = material
+                }
+
+                e.castShadow = true
+
+                if (e.name === 'ground' || e.name.includes('rock')) {
+                    e.receiveShadow = true
+                }
+
+                e.material = defaultMaterial
             }
         })
 
-        this.scene.add(modelMain)
-
-        // set matcaps resources
-        const modelMatcaps:Scene = resources['model-matcaps'].scene
-        this.scene.add(modelMatcaps)
-
-        modelMatcaps.traverse((e:any) => {
-            setMatcapMaterial(e, resources)
-        })
-
-        // set lanterns
-        const modelLantern = resources['model-lantern'].scene
-        modelLantern.traverse((e:any) => {
-
-            e.position.copy(new Vector3())
-
-            if (e.name.includes('red')) {
-                const m = matcapMaterial(resources['matcap-red'])
-                e.material = m
-            }
-            if (e.name.includes('yellow')) {
-                const m = matcapMaterial(resources['matcap-yellow'])
-                e.material = m
-            }
-        })
-
-        configLanters.forEach((e: any) => {
-            const position = new Vector3(e.x, e.y, e.z)
-            const lantern = modelLantern.clone()
-            lantern.position.copy(position)
-            this.scene.add(lantern)
-        })
-
-        // set repeated elements
-        const modelElements = resources['model-elements'].scene
-        modelElements.traverse((mesh:any) => {
-            switch (mesh.name) {
-                case 'tree':
-                    mesh.material = matcapMaterial(resources['matcap-green'])
-
-                    configTrees.forEach((e:any) => {
-                        const tree = mesh.clone()
-                        tree.position.set(e.x, e.y, e.z)
-                        tree.scale.set(e.s, e.s, e.s)
-                        this.scene.add(tree)
-                    })
-                    break
-                case 'gold':
-                    mesh.material = matcapMaterial(resources['matcap-gold'])
-
-                    configGolds.forEach((e:any) => {
-                        const gold = mesh.clone()
-                        gold.position.set(e.x, e.y, e.z)
-                        gold.scale.set(e.s, e.s, e.s)
-                        gold.rotation.set(0, 0, e.r / 180 * Math.PI)
-                        this.scene.add(gold)
-                    })
-                    break
-                case 'coin':
-                    const coinMesh = mesh.clone()
-                    coinMesh.material = matcapMaterial(resources['matcap-gold'])
-                    this.coin.build(coinMesh)
-                    this.coin.mesh && this.scene.add(this.coin.mesh)
-                    break
-            }
-        })
-
-        // set loong
-        this.loong.build(resources)
-
-
+        this.scene.add(sceneModel)
     }
 
 

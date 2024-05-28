@@ -22,14 +22,14 @@ export default class Camera {
 
         this.perspective = this.createCamera(width, height)
 
-        this.radius = 10
-        this.horizontalRadian = -0.8142681426814274
-        this.verticelRadian = 2.843021718204985
+        this.radius = 8
+        this.horizontalRadian =   0
+        this.verticelRadian = Math.PI / 180 * 65
     }
 
     private createCamera (width: number, height: number) {
         const camera = new PerspectiveCamera( 40, width / height, 0.1, 1000 )
-        camera.up.set(0, 0, 1)
+        camera.up.set(0, 1, 0)
 
         return camera
     }
@@ -44,11 +44,11 @@ export default class Camera {
 
         if (controls.pointer.down) {
             const normalizeDelta = controls.getNormalisedPointerDelta()
-            this.horizontalRadian += normalizeDelta.x * 2
+            this.horizontalRadian -= normalizeDelta.x * 2
             this.verticelRadian -= normalizeDelta.y * 2
 
-            const max = Math.PI / 180 * 160
-            const min = Math.PI / 180 * 91
+            const max = Math.PI / 180 * 80
+            const min = Math.PI  / 180 * 30
             if (this.verticelRadian < min) this.verticelRadian = min
             if (this.verticelRadian > max) this.verticelRadian = max
 

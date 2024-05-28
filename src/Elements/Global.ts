@@ -1,4 +1,5 @@
 import checkDev from "@/utils/checkDev"
+import { Mesh, Raycaster } from "three"
 
 type Time = {
     elapsed: number
@@ -15,6 +16,11 @@ export default class Global {
     height: number
     pixelRatio: number
 
+    raycaster: Raycaster
+    
+
+    
+
     isDev: boolean
 
     constructor () {
@@ -24,11 +30,15 @@ export default class Global {
             delta: 0
         }
 
+
+
         this.width = window.innerWidth
         this.height = window.innerHeight
-        this.pixelRatio = window.devicePixelRatio
+        this.pixelRatio = Math.min(window.devicePixelRatio, 2)
 
-        this.isDev = checkDev()
+
+        // this.isDev = checkDev()
+        this.isDev = true
 
     }
 
