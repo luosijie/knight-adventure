@@ -1,30 +1,8 @@
-import { AnimationAction, AnimationClip, AnimationMixer, ArrowHelper, Group, Mesh, MeshBasicMaterial, Object3D, PlaneGeometry, Raycaster, Scene, SkinnedMesh, SRGBColorSpace, Texture, Vector2, Vector3 } from 'three'
+import { AnimationClip, Mesh, Object3D, Raycaster, Texture, Vector3 } from 'three'
 
+import Character from './Character'
 import fakeShadowMaterial from '@/materials/fakeShadowMaterial'
 
-import Global from './Global'
-import Character from './Character'
-const global = Global.getInstance()
-
-type Actions = {
-    Attack: AnimationAction
-    Cheer: AnimationAction
-    Death: AnimationAction
-    Death_Pose: AnimationAction
-    Idle: AnimationAction
-    Jump: AnimationAction
-    Running: AnimationAction
-    Walking: AnimationAction
-    Walking_Backwards: AnimationAction
-}
-
-
-
-const SPEED = {
-    FORWARD: .015,
-    BACKWARD: .01,
-    ROTATION: .02
-}
 
 const RAYPOINTS = {
     ORIGIN: new Vector3(0, .6, 0),
@@ -34,25 +12,31 @@ const RAYPOINTS = {
 
 export default class Player extends Character {
 
-    actions: Actions
+    speed: number
+    rotation: number
+
+    raycaster: Raycaster
 
 
 
 
 
 
+    constructor (model: any, animations: any, texture: Texture) {
 
-    constructor (model: any, texture: Texture) {
+        super(model, animations, texture)
 
-        super(model, texture)
+        
+        this.raycaster = new Raycaster()   
 
-        this.actions = this.createActions()      
+        this.speed = 0
+        this.rotation = 0
 
         this.init()
     }
 
     private init () {
-
+        this.setActions()
         if (this.currentAction) {
             this.currentAction.play()
         }
@@ -61,31 +45,26 @@ export default class Player extends Character {
     }
 
 
-    private createActions () {
+    private setActions () {
         
-        const animations = this.model.animations
+        const animations = this.animations
         const Attack = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
         const Cheer = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
         const Death = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
-        const Death_Pose = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
         const Idle = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === '2H_Melee_Idle'))
-        const Jump = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
+        
         const Running = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
         const Walking = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
-        const Walking_Backwards = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
+        const WalkingBackwards = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
         
         this.currentAction = Idle
-        return {
-            Attack,
-            Cheer,
-            Death,
-            Death_Pose,
-            Idle,
-            Jump,
-            Running,
-            Walking,
-            Walking_Backwards
-        }
+        this.actions.Attack = Attack
+        this.actions.Cheer = Cheer
+        this.actions.Death = Death
+        this.actions.Idle = Idle
+        this.actions.Running = Running
+        this.actions.Walking = Walking
+        this.actions.WalkingBackwards = WalkingBackwards
     }
 
 
@@ -100,21 +79,21 @@ export default class Player extends Character {
                     // this.actions.jumping.play()
                     break
                 case 'w':
-                    this.speed = SPEED.FORWARD
+                    this.speed = this.speeds.Forward
                     this.setAction(this.actions.Walking)
                 break
                 case 's':
-                    this.speed = -SPEED.BACKWARD
-                    this.setAction(this.actions.Walking_Backwards)
+                    this.speed = -this.speeds.Backward
+                    this.setAction(this.actions.WalkingBackwards)
                 break
                 case 'a':
-                    this.rotation = SPEED.ROTATION
-                    this.speed = SPEED.FORWARD
+                    this.rotation = this.speeds.Rotation
+                    this.speed = this.speeds.Forward
                     this.setAction(this.actions.Walking)
                     break
                 case 'd':
-                    this.rotation = -SPEED.ROTATION
-                    this.speed = SPEED.FORWARD 
+                    this.rotation = -this.speeds.Rotation
+                    this.speed = this.speeds.Forward 
 
                     this.setAction(this.actions.Walking)
 
@@ -151,44 +130,26 @@ export default class Player extends Character {
         })
     }
 
-    setAction(action: AnimationAction) {
-        if (this.currentAction === action) return
-
-        this.cancelCurrentAction()
-        this.currentAction = action
-        this.currentAction.reset()
-        this.currentAction.play()
-    }
-
     update (navmesh: Mesh) {
         this.animate()
 
-        if (this.rotation !== 0) this.main.rotateY(this.rotation)
+        if (this.rotation !== 0) {
+            this.main.rotateY(this.rotation)
+            this.main.updateMatrix()
+        }
 
         
         if (this.speed !== 0) {
             const target = new Object3D()
             this.main.getWorldPosition(target.position)
             target.applyQuaternion(this.main.quaternion)
-            target.translateZ(-this.speed * 1.5)
-            console.log(target.position.z)
+            target.translateZ(this.speed * 1.5)
 
 
             const rayOrigin = new Vector3()
             target.getWorldPosition(rayOrigin)
             rayOrigin.add(RAYPOINTS.ORIGIN)
             
-            // TODO: intersect door
-            // RAYPOINTS.FORWARD.applyQuaternion(this.main.quaternion)
-            // this.raycaster.set(rayOrigin, RAYPOINTS.FORWARD)
-
-            // this.helpers.forward.setDirection(RAYPOINTS.FORWARD)
-
-            // const intersectsDoor = this.raycaster.intersectObjects([door.left, door.right])
-            // console.log(intersectsDoor.length)
-            // if (intersectsDoor.length) return
-
-            // intersect ground
 
             this.raycaster.set(rayOrigin, RAYPOINTS.DOWN)
 
@@ -198,9 +159,7 @@ export default class Player extends Character {
                 const i = intersects[0]
                 this.main.position.copy(i.point)
                 // this.main.position.lerp(i.point, .6)
-            }
-
-           
+            } 
 
         }
     }

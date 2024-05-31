@@ -10,6 +10,9 @@ import World from './Elements/World'
 import Global from './Elements/Global'
 const global = Global.getInstance()
 
+import { init as initRecastNavigation, NavMesh, NavMeshQuery } from 'recast-navigation'
+
+
 const loader = new Loader()
 
 
@@ -29,7 +32,8 @@ loader.onFileLoaded(() => {
     }
 })
 
-loader.onLoadEnd(resources => {
+loader.onLoadEnd(async resources => {
+    await initRecastNavigation()
     gsap.to('.loading', { opacity: 0, onComplete: () => {
         const canvas = document.querySelector('canvas')
         if (canvas) {

@@ -21,6 +21,9 @@ export default defineConfig(({ mode }) => {
         },
         plugins: [
             glsl({ watch: true })
-        ]
+        ],
+        optimizeDeps: {
+            exclude: ['recast-navigation']
+        }
     }
 })

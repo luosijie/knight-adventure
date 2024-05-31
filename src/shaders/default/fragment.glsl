@@ -16,8 +16,8 @@ void main() {
     // alpha = alpha * .8;
 
     // gl_FragColor = vec4(textureColor, strength);
-    // csm_FragColor = textureColor;
-    csm_DiffuseColor = textureColor;
+    csm_FragColor = textureColor;
+    // csm_DiffuseColor = textureColor;
     // gl_FragColor = textureColor;
     // csm_Roughness = 0.;
 }

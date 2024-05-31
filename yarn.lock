@@ -193,6 +193,34 @@
     "@nodelib/fs.scandir" "2.1.5"
     fastq "^1.6.0"
 
+"@recast-navigation/core@0.29.2":
+  version "0.29.2"
+  resolved "https://registry.yarnpkg.com/@recast-navigation/core/-/core-0.29.2.tgz#5bbc6e3fc6a5b77f3b4e569d7a8b1bb80a090478"
+  integrity sha512-H9ntaVqnWhCMAFii4Pz57jZm6Xo7DcimHWxITFKZuLZ/AT3pDRdkX5YnaCMXkR8dd+E+2n5vnogiBkRz0EfdEA==
+  dependencies:
+    "@recast-navigation/wasm" "0.29.2"
+
+"@recast-navigation/generators@0.29.2", "@recast-navigation/generators@^0.29.2":
+  version "0.29.2"
+  resolved "https://registry.yarnpkg.com/@recast-navigation/generators/-/generators-0.29.2.tgz#b9a36802ef6f39b8492005f294accddd25f6e61d"
+  integrity sha512-PVZqHoYStiSmwxZ+I73xRJPiLgLAb/iUvYcB3UltOA4gpi9bkL11pKkDVxHUjWFGw4RAtVi9qYKP19cxCM00jA==
+  dependencies:
+    "@recast-navigation/core" "0.29.2"
+    "@recast-navigation/wasm" "0.29.2"
+
+"@recast-navigation/three@0.29.2", "@recast-navigation/three@^0.29.2":
+  version "0.29.2"
+  resolved "https://registry.yarnpkg.com/@recast-navigation/three/-/three-0.29.2.tgz#d9d9daf858f7c16cebdbc3ce0866dc7d8de1cc5b"
+  integrity sha512-gSLoGA+cuKR3i24z/MHC0gWJK+yrP+BJI+uiEtfx2ZxiCqLjeIBvZRn8SVvtZNLmnVkA3o9G57oDd1HoptObMA==
+  dependencies:
+    "@recast-navigation/core" "0.29.2"
+    "@recast-navigation/generators" "0.29.2"
+
+"@recast-navigation/wasm@0.29.2", "@recast-navigation/wasm@^0.29.2":
+  version "0.29.2"
+  resolved "https://registry.yarnpkg.com/@recast-navigation/wasm/-/wasm-0.29.2.tgz#bcda2178d62a2effb6019b95e0d5889f7ddc0f5b"
+  integrity sha512-3b1Qc3iPsshPJSb0MpDdCPtRWwRbeMVAAFYZW4SAuujnkvVokZX1yI5+tr1XN2HyHA83srPnBeXSKRX0fJK1WQ==
+
 "@rollup/pluginutils@^4.2.1":
   version "4.2.1"
   resolved "https://registry.npmjs.org/@rollup/pluginutils/-/pluginutils-4.2.1.tgz#e6c6c3aba0744edce3fb2074922d3776c0af2a6d"
@@ -1993,6 +2021,15 @@ readdirp@~3.6.0:
   dependencies:
     picomatch "^2.2.1"
 
+recast-navigation@^0.29.2:
+  version "0.29.2"
+  resolved "https://registry.yarnpkg.com/recast-navigation/-/recast-navigation-0.29.2.tgz#0ab3df8d8c7be34c3ffea61e84bf9411313b2cc0"
+  integrity sha512-3zJHW61ilrSybulwtDSL4d6o29HGsiRDNCkkFrrYS70U+fnzzU6Jlv0DPfiOdUHU4iJHri352Zz1YcTSQR6BvA==
+  dependencies:
+    "@recast-navigation/core" "0.29.2"
+    "@recast-navigation/generators" "0.29.2"
+    "@recast-navigation/three" "0.29.2"
+
 redent@^3.0.0:
   version "3.0.0"
   resolved "https://registry.yarnpkg.com/redent/-/redent-3.0.0.tgz#e557b7998316bb53c9f1f56fa626352c6963059f"
@@ -2395,6 +2432,11 @@ text-table@^0.2.0:
   version "0.2.0"
   resolved "https://registry.npmjs.org/text-table/-/text-table-0.2.0.tgz#7f5ee823ae805207c00af2df4a84ec3fcfa570b4"
   integrity sha512-N+8UisAXDGk8PFXP4HAzVR9nbfmVJ3zYLAWiTIoqC5v5isinhr+r5uaO8+7r3BMfuNIufIsA7RdpVgacC2cSpw==
+
+three-csg-ts@^3.1.14:
+  version "3.1.14"
+  resolved "https://registry.yarnpkg.com/three-csg-ts/-/three-csg-ts-3.1.14.tgz#f7db0f0afcf4ff94135b7cd83ec27b873294a134"
+  integrity sha512-miDfFA/bxXU5sgnePj28Nq4wcdmGkdM6dbv+lqK/vb0KbeYEDzcA9aTwMOyS1a3Fd/TDkcJ7MxHRevIGj8hMSA==
 
 three-custom-shader-material@^5.4.0:
   version "5.4.0"

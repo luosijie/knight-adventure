@@ -1,20 +1,23 @@
-import { AmbientLight, ArrowHelper, AxesHelper, Clock, DirectionalLight, Fog, Group, Mesh, MeshBasicMaterial, MeshStandardMaterial, PCFSoftShadowMap, Raycaster, Scene, SRGBColorSpace, Vector2, Vector3, WebGLRenderer } from 'three'
+import { AmbientLight, ArrowHelper, AxesHelper, Clock, DirectionalLight, Fog, Mesh, PCFSoftShadowMap, Raycaster, Scene, SRGBColorSpace, Vector2, WebGLRenderer } from 'three'
 import Stats from 'stats.js'
 
 import Camera from './Camera'
 
 import Player from './Player'
-import Skeleton from './Skeleton'
-
 import Global from './Global'
 import Controls from './Controls'
 import createDefaultMaterial from '@/materials/createDefaultMaterial'
 import { Pathfinding, PathfindingHelper } from 'three-pathfinding'
+
+import Skeletons from './Skeletons'
+import PathFinder from '../libs/PathFinder'
 const global = Global.getInstance()
 
 // import Sound from './Sound'
 
 export default class World {
+    resources: any
+
     isReady: boolean
     isActive: boolean
 
@@ -37,20 +40,23 @@ export default class World {
 
     fog: Fog
    
-    pathfinding: Pathfinding
-    pathfindingHelper: PathfindingHelper
+
     navmesh: Mesh
+    pathFinder: PathFinder
     // sound: Sound
 
     light: DirectionalLight
     ambientLight: AmbientLight
 
     player: Player
-    skeleton: Skeleton
+    skeletons: Skeletons
 
     points: Array<ArrowHelper>
+    
+
 
     constructor (canvas: HTMLCanvasElement, resources: any) {
+        this.resources = resources
 
         this.isReady = false
         this.isActive = false
@@ -65,25 +71,29 @@ export default class World {
         this.scene = new Scene()
 
         this.navmesh = new Mesh()
-        this.pathfinding = new Pathfinding()
-        this.pathfindingHelper = new PathfindingHelper()
+        this.pathFinder = new PathFinder()
+
         this.controls = new Controls()
         this.raycaster = new Raycaster()
 
-        this.player = new Player(resources['model-knight'], resources['texture-kight'])
-        this.skeleton = new Skeleton(resources['model-skeleton'], resources['texture-skeleton'])
-        
+        const modelPlayer = resources['model-knight']
+        this.player = new Player(modelPlayer.scene, modelPlayer.animations, resources['texture-kight'])
+        console.log(resources['model-skeleton'])
+
+        const modelSkeleton = resources['model-skeleton']
+        this.skeletons = new Skeletons(modelSkeleton.scene, modelSkeleton.animations, resources['texture-skeleton'])
+
         this.camera = new Camera(global.width, global.height)
 
         this.light = this.createLight()
 
         this.ambientLight = new AmbientLight('#ffffff', 2.5)
-
         
         this.build(resources)
         this.init()
         
     }
+
 
 
     private createLight () {
@@ -104,14 +114,11 @@ export default class World {
         document.body.appendChild(this.stats.dom)
 
         this.player.main.position.x = -1
-        this.skeleton.main.position.x = 2
-
-        this.scene.add(this.pathfindingHelper)
 
         this.scene.add(this.light)
         this.scene.add(this.ambientLight)
         this.scene.add(this.player.main)
-        this.scene.add(this.skeleton.main)
+        this.scene.add(this.skeletons.group)
 
         this.initControls()
 
@@ -136,8 +143,8 @@ export default class World {
             if (intersets && intersets.length) {
 
                 const p = intersets[0].point
-                const path = this.findPath(this.player.main.position, p)
-                console.log('path', path)
+
+                this.player.goTo(p, this.skeletons.list)
 
 
             }
@@ -159,9 +166,9 @@ export default class World {
 
         renderer.shadowMap.enabled = true
         renderer.shadowMap.type = PCFSoftShadowMap
-        // renderer.out
 
-        // renderer.outputEncoding = sRGBEncoding
+
+        renderer.outputColorSpace = SRGBColorSpace
         return renderer
     }
 
@@ -170,13 +177,14 @@ export default class World {
         // const delta = this.clock.getDelta()
         this.stats.update()
 
-        const elapsedTime = this.clock.getElapsedTime()
-
-
         this.controls.update()
 
         this.navmesh && this.player.update(this.navmesh)
-        this.skeleton.update()
+        this.skeletons.update(this.player)
+
+        // this.dummy.position.copy(this.player.dummy.position).add(new Vector3(0, 1, 0))
+        // this.dummy.applyQuaternion(new Quaternion(0, 0.8697615032757793, 0, 0.4934723167711199))
+        // this.dummy.updateMatrix()
 
         // this.findPath(this.player.main.position, this.skeleton.main.position)
 
@@ -187,30 +195,6 @@ export default class World {
 
     }
 
-    findPath (a: Vector3, b: Vector3) {
-        if (!this.navmesh) return
-
-
-        const ZONE = 'level'
-        this.pathfinding.setZoneData(ZONE, Pathfinding.createZone(this.navmesh.geometry))
-        
-        const groupId = this.pathfinding.getGroup(ZONE, a)
-        const groupIdB = this.pathfinding.getGroup(ZONE, b)
-        const clostA = this.pathfinding.getClosestNode(a, ZONE, groupId)
-        const clostB = this.pathfinding.getClosestNode(b, ZONE, groupId)
-
-        console.log(groupId, groupIdB)
-
-        const path = this.pathfinding.findPath(a, b, ZONE, groupId)
-        
-
-        this.pathfindingHelper.reset()
-        this.pathfindingHelper.setPlayerPosition(a)
-        this.pathfindingHelper.setTargetPosition(b)
-        this.pathfindingHelper.setPath(path)
-
-        return path
-    }
 
     // Build world elements with resources
     build (resources: any) {
@@ -226,8 +210,8 @@ export default class World {
                 // Set navmesh
                 if (e.name === 'Navmesh') {
                     this.navmesh = e
-                    // this.navmesh.position.z = 0.1
-
+                    this.pathFinder.init(e)
+                    global.setNavmesh(e)
                 }
 
                 e.castShadow = true
