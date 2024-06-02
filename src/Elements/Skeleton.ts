@@ -1,10 +1,9 @@
 import { CrowdAgent } from 'recast-navigation'
-import {  AnimationClip, CircleGeometry, Mesh, MeshBasicMaterial, Texture, Vector3 } from 'three'
+import {  AnimationClip, Texture, Vector3 } from 'three'
 import Battle from './Battle'
 
 import Character from './Character'
 import Global from './Global'
-import Player from './Player'
 const global = Global.getInstance()
 
 
@@ -15,28 +14,48 @@ export default class Skeleton extends Character {
 
     constructor (model: any,animations: any, texture: Texture) {
 
-        super(model, animations, texture, { scale: .18 })
+        super(model, animations, texture, { scale: .18, basicLife: 20 })
 
         this.origin = new Vector3()
         this.agent = null
 
-        this.init()
     }
 
-    private init () {
+    init () {
+        this.setPosition(this.origin.x, this.origin.y, this.origin.z)
+        this.setRotation(0, Math.random() * Math.PI * 2, 0)
 
         this.setActions()
         if (this.currentAction) {
             this.currentAction.play()
         }
 
-        // const circle = new Mesh(
-        //     new CircleGeometry(this.range),
-        //     new MeshBasicMaterial({ color: '#ff0000' })
-        // )
-        // circle.position.y = .1
-        // circle.rotateX(-Math.PI / 2)
-        // this.main.add(circle)
+    }
+
+    respawn () {
+        // this.clearEvents()
+        // this.main.visible = false
+
+        this.setPosition(this.origin.x, this.origin.y, this.origin.z)
+        this.setRotation(0, Math.random() * Math.PI * 2, 0)
+
+        this.setAction(this.actions.Idle, {fadeIn: 0})
+
+
+
+        this.life = this.basicLife
+        this.liefbar.visible = true
+        this.setLifebar(this.life)
+
+        // this.main.visible = true
+
+        // setTimeout(() => {
+        // }, 1000)
+
+        // this.init()
+
+        // this.liefbar.material.uniforms.uLife
+
     }
 
     setAgent (position: Vector3) {
@@ -53,6 +72,11 @@ export default class Skeleton extends Character {
         this.agent = agent
     }
 
+    clearAgent() {
+        if (!global.pathFinder.crowd || !this.agent) return
+        global.pathFinder.crowd.removeAgent(this.agent)
+        this.agent = null
+    }
 
 
     private setActions () {
@@ -78,6 +102,12 @@ export default class Skeleton extends Character {
         
         this.animate()
 
+        if (this.life <= 0) {
+            this.clearAgent()
+            battle.remove(this)
+            return
+        }
+
         const player = battle.player
         
         const distToOrigin = this.origin.distanceTo(player.main.position)
@@ -87,8 +117,7 @@ export default class Skeleton extends Character {
             }
         } else {
             if (this.agent) {
-                global.pathFinder.crowd?.removeAgent(this.agent)
-                this.agent = null
+                this.clearAgent()
                 this.goTo(this.origin)
 
                 battle.remove(this)
@@ -107,7 +136,13 @@ export default class Skeleton extends Character {
             this.setAction(this.actions.Walking)
             battle.remove(this)
         }
-        this.agent.requestMoveTarget(player.getPosition())
+
+        // Move to player
+        const target = player.getPosition().clone()
+        const dir = target.clone().sub(this.getPosition().clone())
+        dir.normalize()
+        target.sub(dir.multiplyScalar(.2))
+        this.agent.requestMoveTarget(target)
         const position = this.agent.position()
         
         this.main.lookAt(player.getPosition())

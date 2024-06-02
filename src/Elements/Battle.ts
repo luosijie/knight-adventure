@@ -32,11 +32,11 @@ export default class Battle extends EventEmitter {
             if (this.target) {
                 if (!this.interval) {
                     this.interval = setInterval(() => {
-                        this.player.getHurt(this.list.length)
-                        console.log('player demage', this.player?.life)
+                        this.list.forEach(e => {
+                            this.player.getHurt(e.demage)
+                        })
                         if (this.player.currentAction === this.player.actions.Attack) {
-                            this.target && this.target.getHurt()
-                            console.log('enemy demage', this.target?.life)
+                            this.target && this.target.getHurt(this.player.demage)
                         }
                     }, 500)
                 }
@@ -44,6 +44,7 @@ export default class Battle extends EventEmitter {
             } else {
                 window.clearInterval(this.interval)
                 this.interval = null
+                this.player.setAction(this.player.actions.Idle)
             }
         })
     }

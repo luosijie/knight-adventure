@@ -1,13 +1,8 @@
 import * as SkeletonUtils from 'three/examples/jsm/utils/SkeletonUtils'
-import { Group, Object3D, Texture, Vector3 } from 'three'
+import { Group, Texture, Vector3 } from 'three'
 import Skeleton from './Skeleton'
-import Player from './Player'
-import throttle from '@/libs/throttle'
-import Character from './Character'
 
-import Global from './Global'
 import Battle from './Battle'
-const global = Global.getInstance()
 
 export default class Skeletons {
 
@@ -43,8 +38,14 @@ export default class Skeletons {
         
         // global.pathFinder.query
         // skeleton.setAgent(position)
-        skeleton.setPosition(position.x, position.y, position.z)
-        skeleton.setRotation(0, Math.random() * Math.PI * 2, 0)
+
+        skeleton.init()
+
+        skeleton.on('die', () => {
+            setTimeout(() => {
+                skeleton.respawn()
+            }, 10 * 1000)
+        })
         
         this.group.add(skeleton.main)
         this.list.push(skeleton)

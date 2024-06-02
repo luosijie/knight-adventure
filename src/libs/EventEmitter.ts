@@ -16,12 +16,18 @@ export default class EventEmitter {
         this.events[type].push(event)
     }
 
-    emit(type: string, ...args: any) {
+    emit (type: string, ...args: any) {
         const fns = this.events[type]
         if (fns && fns.length) {
             fns.forEach(fn => {
                 fn.apply(this, args)
             })
+        }
+    }
+
+    clearEvents () {
+        for (const key in this.events) {
+            delete(this.events[key])
         }
     }
 }

@@ -1,4 +1,4 @@
-import { AnimationAction, AnimationMixer, BoxGeometry, Mesh, MeshBasicMaterial, Object3D, Path, PlaneGeometry, Quaternion, ShaderMaterial, SkinnedMesh, SRGBColorSpace, Texture, Vector3 } from 'three'
+import { AnimationAction, AnimationMixer, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, Object3D, Path, PlaneGeometry, Quaternion, ShaderMaterial, SkinnedMesh, SRGBColorSpace, Texture, Vector3 } from 'three'
 
 
 import fakeShadowMaterial from '@/materials/fakeShadowMaterial'
@@ -7,7 +7,15 @@ import createDefaultMaterial from '@/materials/createDefaultMaterial'
 import Global from './Global'
 import uuid from '@/libs/uuid'
 import createLifebar from '@/utils/createLifebar'
+import EventEmitter from '@/libs/EventEmitter'
 const global = Global.getInstance()
+
+
+interface ActionConfig {
+    fadeIn?: number
+    loop?: any
+    repetation?: number
+}
 
 export interface Config {
     scale?: number
@@ -41,7 +49,7 @@ export type Actions = {
     WalkingBackwards: Action
 }
 
-export default class Character {
+export default class Character extends EventEmitter {
     id: string
 
     basicLife: number
@@ -72,7 +80,6 @@ export default class Character {
 
     fakeShadow: Mesh
 
-    collision: Mesh
 
     path: Array<Vector3>
 
@@ -84,6 +91,8 @@ export default class Character {
 
 
     constructor (model: any, animations: any,texture: Texture, config: Config = { basicLife: 100 }) {
+        super()
+        
         this.id = uuid(20)
 
         this.scale = config.scale || .2
@@ -131,7 +140,6 @@ export default class Character {
 
         this.currentAction = null
 
-        this.collision = this.createCollision()
 
         this.path = []
 
@@ -152,14 +160,6 @@ export default class Character {
 
 
 
-    private createCollision () {
-        const geometry = new BoxGeometry(1, 4, 1)
-        const material = new MeshBasicMaterial({
-            wireframe: true
-        })
-        return new Mesh(geometry, material)
-    }
-
 
     private createFakeShadow () {
         const geometry = new PlaneGeometry(3,3)
@@ -173,14 +173,26 @@ export default class Character {
 
 
 
-    setAction(action: Action) {
+    setAction(action: Action, config: ActionConfig  = {} ) {
         if (action === null) return
         if (this.currentAction === action) return
+
+        const fadeIn = config.fadeIn || 1
+        const loop = config.loop || LoopRepeat
+        const repetation = config.repetation || Infinity
+
 
         this.cancelCurrentAction()
         this.currentAction = action
         this.currentAction.reset()
-        this.currentAction.fadeIn(1)
+        this.currentAction.setLoop(config.loop, repetation)
+        this.currentAction.clampWhenFinished = loop === LoopOnce
+        
+        if (fadeIn) {
+            this.currentAction.fadeIn(fadeIn)
+        }
+        
+
         this.currentAction.play()
     }
 
@@ -215,6 +227,8 @@ export default class Character {
 
         return body
     }
+
+    
 
     setPath (path: Array<Vector3>) {
         this.path = path
@@ -294,9 +308,27 @@ export default class Character {
     getHurt (value?: number) {
         value = value || 1
         this.life -= value
-        if (this.liefbar.material instanceof ShaderMaterial) {
-            this.liefbar.material.uniforms.uLife.value = this.life / this.basicLife
+
+        this.setLifebar(this.life)
+
+        if (this.life <= 0) {
+            this.die()
         }
+    }
+
+    setLifebar( life: number) {
+        if (this.liefbar.material instanceof ShaderMaterial) {
+            this.liefbar.material.uniforms.uLife.value = life / this.basicLife
+        }
+    }
+
+    die () {
+        if (this.currentAction === this.actions.Death) return
+        this.setAction(this.actions.Death, { loop: LoopOnce, repetation: 1 })
+        this.liefbar.visible = false
+        this.clearPath()
+        
+        this.emit('die')
     }
 
     animate () {

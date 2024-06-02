@@ -18,7 +18,10 @@ export default class Player extends Character {
 
     constructor (model: any, animations: any, texture: Texture) {
 
-        super(model, animations, texture)
+        super(model, animations, texture, {
+            basicLife: 200,
+            demage: 2
+        })
 
         this.speed = 0
         this.rotation = 0
