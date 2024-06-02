@@ -11,6 +11,7 @@ import createDefaultMaterial from '@/materials/createDefaultMaterial'
 import Skeletons from './Skeletons'
 import PathFinder from '../libs/PathFinder'
 import Battle from './Battle'
+import Ripple from './Ripple'
 const global = Global.getInstance()
 
 // import Sound from './Sound'
@@ -51,6 +52,7 @@ export default class World {
     player: Player
     skeletons: Skeletons
     battle: Battle
+    ripple: Ripple
 
     points: Array<ArrowHelper>
     
@@ -85,6 +87,9 @@ export default class World {
         this.skeletons = new Skeletons(modelSkeleton.scene, modelSkeleton.animations, resources['texture-skeleton'])
 
         this.battle = new Battle(this.player)
+
+        this.ripple = new Ripple()
+        this.ripple.mesh.position.z = 2
 
         this.camera = new Camera(global.width, global.height)
 
@@ -122,6 +127,7 @@ export default class World {
         this.scene.add(this.ambientLight)
         this.scene.add(this.player.main)
         this.scene.add(this.skeletons.group)
+        this.scene.add(this.ripple.mesh)
 
         this.initControls()
 
@@ -149,6 +155,8 @@ export default class World {
 
                 this.player.clearPath()
                 this.player.goTo(p)
+
+                this.ripple.reset(p)
 
             }
             // console.log(evt)
@@ -186,6 +194,8 @@ export default class World {
 
         this.navmesh && this.player.update(this.navmesh, this.battle)
         this.skeletons.update(this.battle)
+
+        this.ripple.update()
 
         // this.dummy.position.copy(this.player.dummy.position).add(new Vector3(0, 1, 0))
         // this.dummy.applyQuaternion(new Quaternion(0, 0.8697615032757793, 0, 0.4934723167711199))
