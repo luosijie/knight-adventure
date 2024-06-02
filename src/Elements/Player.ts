@@ -1,8 +1,7 @@
 import { AnimationClip, Mesh, Object3D, Raycaster, Texture, Vector3 } from 'three'
+import Battle from './Battle'
 
 import Character from './Character'
-import fakeShadowMaterial from '@/materials/fakeShadowMaterial'
-
 
 const RAYPOINTS = {
     ORIGIN: new Vector3(0, .6, 0),
@@ -17,20 +16,13 @@ export default class Player extends Character {
 
     raycaster: Raycaster
 
-
-
-
-
-
     constructor (model: any, animations: any, texture: Texture) {
 
         super(model, animations, texture)
 
-        
-        this.raycaster = new Raycaster()   
-
         this.speed = 0
         this.rotation = 0
+
 
         this.init()
     }
@@ -41,21 +33,21 @@ export default class Player extends Character {
             this.currentAction.play()
         }
 
-        this.initControls()
     }
 
 
     private setActions () {
         
         const animations = this.animations
-        const Attack = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
-        const Cheer = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
-        const Death = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
+
+        const Attack = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === '1H_Melee_Attack_Chop'))
+        const Cheer = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Cheer'))
+        const Death = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Death_A'))
         const Idle = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === '2H_Melee_Idle'))
         
-        const Running = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
+        const Running = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Death_A'))
         const Walking = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
-        const WalkingBackwards = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_B'))
+        const WalkingBackwards = this.animationMixer.clipAction(animations.find((a: AnimationClip) => a.name === 'Walking_Backwards'))
         
         this.currentAction = Idle
         this.actions.Attack = Attack
@@ -130,8 +122,16 @@ export default class Player extends Character {
         })
     }
 
-    update (navmesh: Mesh) {
+    update (navmesh: Mesh, battle: Battle) {
+
         this.animate()
+
+        if (this.currentAction === this.actions.Idle) {
+            if (battle.target) {
+                this.main.lookAt(battle.target.getPosition())
+                this.setAction(this.actions.Attack)
+            }
+        }
 
         if (this.rotation !== 0) {
             this.main.rotateY(this.rotation)

@@ -1,6 +1,9 @@
-import { Mesh } from "three"
+import PathFinder from '@/libs/PathFinder'
 
-type Time = {
+
+
+
+interface Time {
     elapsed: number
     delta: number
 }
@@ -8,6 +11,7 @@ type Time = {
 export default class Global {
 
     private static instance: Global
+
     
     isDev: boolean
 
@@ -17,9 +21,7 @@ export default class Global {
     height: number
     pixelRatio: number
 
-    
-
-    navmesh: Mesh
+    pathFinder: PathFinder
     
 
     constructor () {
@@ -35,14 +37,20 @@ export default class Global {
 
 
         // this.isDev = checkDev()
-        this.navmesh = new Mesh()
+
+        this.pathFinder = new PathFinder()
+        
         this.isDev = true
 
     }
 
-    setNavmesh (mesh: Mesh) {
-        this.navmesh = mesh
+    update (elapsed: number) {
+        this.time.delta = elapsed - this.time.elapsed
+        this.time.elapsed = elapsed
+
+        this.pathFinder.crowd?.update(this.time.delta)
     }
+
 
     static getInstance () {
         if (!Global.instance)  Global.instance = new Global()

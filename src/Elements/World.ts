@@ -7,10 +7,10 @@ import Player from './Player'
 import Global from './Global'
 import Controls from './Controls'
 import createDefaultMaterial from '@/materials/createDefaultMaterial'
-import { Pathfinding, PathfindingHelper } from 'three-pathfinding'
 
 import Skeletons from './Skeletons'
 import PathFinder from '../libs/PathFinder'
+import Battle from './Battle'
 const global = Global.getInstance()
 
 // import Sound from './Sound'
@@ -50,6 +50,7 @@ export default class World {
 
     player: Player
     skeletons: Skeletons
+    battle: Battle
 
     points: Array<ArrowHelper>
     
@@ -78,10 +79,12 @@ export default class World {
 
         const modelPlayer = resources['model-knight']
         this.player = new Player(modelPlayer.scene, modelPlayer.animations, resources['texture-kight'])
-        console.log(resources['model-skeleton'])
+        
 
         const modelSkeleton = resources['model-skeleton']
         this.skeletons = new Skeletons(modelSkeleton.scene, modelSkeleton.animations, resources['texture-skeleton'])
+
+        this.battle = new Battle(this.player)
 
         this.camera = new Camera(global.width, global.height)
 
@@ -144,8 +147,8 @@ export default class World {
 
                 const p = intersets[0].point
 
-                this.player.goTo(p, this.skeletons.list)
-
+                this.player.clearPath()
+                this.player.goTo(p)
 
             }
             // console.log(evt)
@@ -174,13 +177,15 @@ export default class World {
 
     // Passed to renderer.setAnimationLoop
     private render () {
-        // const delta = this.clock.getDelta()
+        const elapsed = this.clock.getElapsedTime()
+        global.update(elapsed)
+
         this.stats.update()
 
         this.controls.update()
 
-        this.navmesh && this.player.update(this.navmesh)
-        this.skeletons.update(this.player)
+        this.navmesh && this.player.update(this.navmesh, this.battle)
+        this.skeletons.update(this.battle)
 
         // this.dummy.position.copy(this.player.dummy.position).add(new Vector3(0, 1, 0))
         // this.dummy.applyQuaternion(new Quaternion(0, 0.8697615032757793, 0, 0.4934723167711199))
@@ -204,15 +209,19 @@ export default class World {
         sceneTexture.colorSpace = SRGBColorSpace
 
         const defaultMaterial = createDefaultMaterial(sceneTexture)
-       
-        sceneModel.traverse((e: any) => {
+       console.log(sceneModel)
+        sceneModel.traverse(async (e: any) => {
+            if (e.name.includes('skeleton')) {
+                this.skeletons.add(e.position)
+            }
             if (e instanceof Mesh) {
                 // Set navmesh
                 if (e.name === 'Navmesh') {
                     this.navmesh = e
-                    this.pathFinder.init(e)
-                    global.setNavmesh(e)
+                    global.pathFinder.init(e)
                 }
+
+                
 
                 e.castShadow = true
 

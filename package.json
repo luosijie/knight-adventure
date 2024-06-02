@@ -11,7 +11,7 @@
     "deploy": "sh deploy.sh"
   },
   "devDependencies": {
-    "@tweakpane/core": "^1.1.1",
+    "@tweakpane/core": "^2.0.3",
     "@types/howler": "^2.2.7",
     "@types/node": "^18.11.19",
     "@types/three": "^0.161.2",
@@ -34,11 +34,12 @@
     "stylelint-order": "^5.0.0",
     "stylelint-scss": "^4.3.0",
     "typescript": "^4.9.4",
-    "vite": "^4.0.0",
+    "vite": "^5.2.12",
     "vite-plugin-eslint": "^1.8.1",
     "vite-plugin-glsl": "^1.1.2"
   },
   "dependencies": {
+    "@recast-navigation/core": "^0.29.2",
     "@recast-navigation/generators": "^0.29.2",
     "@recast-navigation/three": "^0.29.2",
     "@recast-navigation/wasm": "^0.29.2",
@@ -53,6 +54,6 @@
     "three-csg-ts": "^3.1.14",
     "three-custom-shader-material": "^5.4.0",
     "three-pathfinding": "^1.3.0",
-    "tweakpane": "^3.1.1"
+    "tweakpane": "^4.0.3"
   }
 }

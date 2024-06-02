@@ -1,18 +1,21 @@
-import { AnimationAction, AnimationMixer, BoxGeometry, Mesh, MeshBasicMaterial, Object3D, Path, PlaneGeometry, Quaternion, SkinnedMesh, SRGBColorSpace, Texture, Vector3 } from 'three'
+import { AnimationAction, AnimationMixer, BoxGeometry, Mesh, MeshBasicMaterial, Object3D, Path, PlaneGeometry, Quaternion, ShaderMaterial, SkinnedMesh, SRGBColorSpace, Texture, Vector3 } from 'three'
 
 
 import fakeShadowMaterial from '@/materials/fakeShadowMaterial'
 import createDefaultMaterial from '@/materials/createDefaultMaterial'
-import PathFinder from '../libs/PathFinder'
-
-import workerScript from '@/workers/findPath'
 
 import Global from './Global'
-import PathWorker from '@/libs/PathWorker'
+import uuid from '@/libs/uuid'
+import createLifebar from '@/utils/createLifebar'
 const global = Global.getInstance()
 
+export interface Config {
+    scale?: number
+    basicLife?: number
+    demage?: number
+}
 
-interface Target {
+interface Next {
     position: Vector3
     quaternion: Quaternion
     dir: Vector3
@@ -39,6 +42,15 @@ export type Actions = {
 }
 
 export default class Character {
+    id: string
+
+    basicLife: number
+    life: number
+    demage: number
+
+
+    liefbar: Mesh
+
     model: any
     texture: Texture
     animations: any
@@ -62,18 +74,27 @@ export default class Character {
 
     collision: Mesh
 
-    pathFinder: PathFinder
     path: Array<Vector3>
 
-    target: Target | null
+    target: Vector3 | null
+    next: Next | null
 
-    worker: PathWorker
+    range: number
 
 
 
-    constructor (model: any, animations: any,texture: Texture) {
-        this.worker = this.createWorker()
+    constructor (model: any, animations: any,texture: Texture, config: Config = { basicLife: 100 }) {
+        this.id = uuid(20)
+
+        this.scale = config.scale || .2
+        this.basicLife = config.basicLife || 100
+        this.life = config.basicLife || 100
+        this.demage = config.demage || 1
         
+        this.range = 2
+        
+        
+
         this.model = model
         this.animations = animations
         this.texture = texture
@@ -95,12 +116,15 @@ export default class Character {
         this.body = this.createBody()
         this.animationMixer = new AnimationMixer(this.body)
 
+        this.liefbar = createLifebar()
+        this.liefbar.position.y = .6
+
         this.fakeShadow = this.createFakeShadow()
 
         this.walking = false
 
         this.speeds = {
-            Forward: .015,
+            Forward: .01,
             Backward: .01,
             Rotation: .02
         }
@@ -109,36 +133,24 @@ export default class Character {
 
         this.collision = this.createCollision()
 
-        this.pathFinder = new PathFinder()
-
         this.path = []
 
         this.target = null
-
-        this.scale = .2
+        this.next = null
 
         
-        this.main.scale.set(this.scale, this.scale, this.scale)        
-        
-        this.main.add(this.body)
-        this.main.add(this.collision)
-
-        this.main.add(this.pathFinder.helper)
-
-
-
         
         // this.main.add(this.fakeShadow)
+        this.body.scale.set(this.scale, this.scale, this.scale) 
+        
+        
+        this.main.add(this.body)
+        this.main.add(this.liefbar)
+        // this.main.add(this.collision)
 
     }
 
-    private createWorker () {
-        const worker = new PathWorker()
-        worker.onmessage = e => {
-            console.log(`11`, e)
-        }
-        return worker
-    }
+
 
     private createCollision () {
         const geometry = new BoxGeometry(1, 4, 1)
@@ -208,15 +220,17 @@ export default class Character {
         this.path = path
 
         if (this.path.length) {
-            this.setTarget(this.path.shift())
+            this.setNext(this.path.shift())
         }
 
         
     }
 
-    setTarget (position: Vector3 | null | undefined ) {
+    setNext (position: Vector3 | null | undefined ) {
         if  (position === null || position === undefined) {
+            this.next = null
             this.target = null
+
             this.setAction(this.actions.Idle)
             return null
         }
@@ -231,38 +245,36 @@ export default class Character {
 
         const dist = dummy.position.distanceTo(position)
 
-        const target =  {
+        const next =  {
             position,
             quaternion: dummy.quaternion,
             dist,
             dir
         }
 
-        this.target = target
-        return target
+        this.next = next
+        return next
     }
 
-    clearTarget () {
-        this.target = null
+    clearPath () {
+        this.next = null
         this.path = []
+
+        this.target = null
     }
 
-    async goTo (target: Vector3, collisions: Array<Character>) {
+    async goTo (target: Vector3) {
+        if (this.target) return
+        this.target = target
 
+        const res = await global.pathFinder.find(this.getPosition(), target)
         
-        // const path = await this.pathFinder.find(this.getPosition(), target, collisions)
         
-        // if (path && path.length) {
-        //     this.setPath(path)
-        // }
+        if (res && res.length) {
+            const path = res.map(v => new Vector3(v.x, v.y, v.z))
+            this.setPath(path)
+        }
 
-        // // webworker calculate
-        // this.worker.postMessage(
-        //     this.getPosition(),
-        //     target,
-        //     collisions,
-        //     global.navmesh
-        // )
     }
 
     setPosition (x: number, y: number, z: number) {
@@ -279,23 +291,29 @@ export default class Character {
         this.main.rotation.z = z
     }
 
+    getHurt (value?: number) {
+        value = value || 1
+        this.life -= value
+        if (this.liefbar.material instanceof ShaderMaterial) {
+            this.liefbar.material.uniforms.uLife.value = this.life / this.basicLife
+        }
+    }
+
     animate () {
-        
     
         this.animationMixer.update(.02)
        
-        if (this.target) {
+        if (this.next) {
             this.setAction(this.actions.Walking)
-            this.target.dist = this.main.position.distanceTo(this.target.position)
+            this.next.dist = this.main.position.distanceTo(this.next.position)
       
 
-            if (this.target.dist < this.speeds.Forward) {
-                this.main.position.copy(this.target.position)
-                this.setTarget(this.path.shift())
+            if (this.next.dist < this.speeds.Forward) {
+                this.main.position.copy(this.next.position)
+                this.setNext(this.path.shift())
             } else {
-                this.main.position.add(this.target.dir.clone().multiplyScalar(this.speeds.Forward))
-                this.main.quaternion.slerp(this.target.quaternion, .06)
-              
+                this.main.position.add(this.next.dir.clone().multiplyScalar(this.speeds.Forward))
+                this.main.quaternion.slerp(this.next.quaternion, .06)
             }
 
         } 
