@@ -12,7 +12,6 @@
   },
   "devDependencies": {
     "@tweakpane/core": "^2.0.3",
-    "@types/howler": "^2.2.7",
     "@types/node": "^18.11.19",
     "@types/three": "^0.161.2",
     "@typescript-eslint/eslint-plugin": "^5.0.0",
@@ -43,17 +42,12 @@
     "@recast-navigation/generators": "^0.29.2",
     "@recast-navigation/three": "^0.29.2",
     "@recast-navigation/wasm": "^0.29.2",
-    "cannon-es": "^0.20.0",
-    "cannon-es-debugger": "^1.0.0",
     "gsap": "^3.11.4",
-    "howler": "^2.2.3",
     "quickhull-ts": "^1.0.2",
     "recast-navigation": "^0.29.2",
     "stats.js": "^0.17.0",
     "three": "^0.161.0",
-    "three-csg-ts": "^3.1.14",
     "three-custom-shader-material": "^5.4.0",
-    "three-pathfinding": "^1.3.0",
     "tweakpane": "^4.0.3"
   }
 }
