@@ -63,67 +63,67 @@ export default class Player extends Character {
     }
 
 
-    private initControls() {
-        // Key Down
-        window.addEventListener('keydown', (evt:KeyboardEvent) => {
+    // private initControls() {
+    //     // Key Down
+    //     window.addEventListener('keydown', (evt:KeyboardEvent) => {
             
-            switch (evt.key) {
-                // TODO: player jump
-                case 'Space' :
-                    // this.actions.jumping.reset()
-                    // this.actions.jumping.play()
-                    break
-                case 'w':
-                    this.speed = this.speeds.Forward
-                    this.setAction(this.actions.Walking)
-                break
-                case 's':
-                    this.speed = -this.speeds.Backward
-                    this.setAction(this.actions.WalkingBackwards)
-                break
-                case 'a':
-                    this.rotation = this.speeds.Rotation
-                    this.speed = this.speeds.Forward
-                    this.setAction(this.actions.Walking)
-                    break
-                case 'd':
-                    this.rotation = -this.speeds.Rotation
-                    this.speed = this.speeds.Forward 
+    //         switch (evt.key) {
+    //             // TODO: player jump
+    //             case 'Space' :
+    //                 // this.actions.jumping.reset()
+    //                 // this.actions.jumping.play()
+    //                 break
+    //             case 'w':
+    //                 this.speed = this.speeds.Forward
+    //                 this.setAction(this.actions.Walking)
+    //             break
+    //             case 's':
+    //                 this.speed = -this.speeds.Backward
+    //                 this.setAction(this.actions.WalkingBackwards)
+    //             break
+    //             case 'a':
+    //                 this.rotation = this.speeds.Rotation
+    //                 this.speed = this.speeds.Forward
+    //                 this.setAction(this.actions.Walking)
+    //                 break
+    //             case 'd':
+    //                 this.rotation = -this.speeds.Rotation
+    //                 this.speed = this.speeds.Forward 
 
-                    this.setAction(this.actions.Walking)
+    //                 this.setAction(this.actions.Walking)
 
-            }
-        })
+    //         }
+    //     })
 
-        // Key Up
-        window.addEventListener('keyup', (evt:KeyboardEvent) => {
+    //     // Key Up
+    //     window.addEventListener('keyup', (evt:KeyboardEvent) => {
      
 
-            switch (evt.key) {
-                // TODO: player jump
-                case 'Space' :
-                    // this.actions.jumping.reset()
-                    // this.actions.jumping.play()
-                    break
-                case 'w':
-                    this.speed = 0
-                break
-                case 's':
-                    this.speed = 0
-                break
-                case 'a':
-                    this.rotation = 0
-                    break
-                case 'd':
-                    this.rotation = 0
+    //         switch (evt.key) {
+    //             // TODO: player jump
+    //             case 'Space' :
+    //                 // this.actions.jumping.reset()
+    //                 // this.actions.jumping.play()
+    //                 break
+    //             case 'w':
+    //                 this.speed = 0
+    //             break
+    //             case 's':
+    //                 this.speed = 0
+    //             break
+    //             case 'a':
+    //                 this.rotation = 0
+    //                 break
+    //             case 'd':
+    //                 this.rotation = 0
 
-            }
+    //         }
             
-            if (this.speed === 0 && this.rotation === 0) {
-                this.setAction(this.actions.Idle)
-            }
-        })
-    }
+    //         if (this.speed === 0 && this.rotation === 0) {
+    //             this.setAction(this.actions.Idle)
+    //         }
+    //     })
+    // }
 
     update (navmesh: Mesh, battle: Battle) {
 

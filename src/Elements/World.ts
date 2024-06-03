@@ -1,4 +1,4 @@
-import { AmbientLight, ArrowHelper, AxesHelper, CameraHelper, Clock, DirectionalLight, Fog, Mesh, PCFSoftShadowMap, Raycaster, Scene, SRGBColorSpace, Vector2, WebGLRenderer } from 'three'
+import { AmbientLight, ArrowHelper, Clock, DirectionalLight, Fog, Mesh, Raycaster, Scene, SRGBColorSpace, Vector2, WebGLRenderer } from 'three'
 import Stats from 'stats.js'
 
 import Camera from './Camera'

@@ -10,7 +10,7 @@ import World from './Elements/World'
 import Global from './Elements/Global'
 const global = Global.getInstance()
 
-import { init as initRecastNavigation, NavMesh, NavMeshQuery } from 'recast-navigation'
+import { init as initRecastNavigation } from 'recast-navigation'
 
 
 const loader = new Loader()

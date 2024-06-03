@@ -1,4 +1,4 @@
-import { AnimationAction, AnimationMixer, LoopOnce, LoopRepeat, Mesh, MeshBasicMaterial, Object3D, Path, PlaneGeometry, Quaternion, ShaderMaterial, SkinnedMesh, SRGBColorSpace, Texture, Vector3 } from 'three'
+import { AnimationAction, AnimationMixer, LoopOnce, LoopRepeat, Mesh, Object3D, PlaneGeometry, Quaternion, ShaderMaterial, SkinnedMesh, SRGBColorSpace, Texture, Vector3 } from 'three'
 
 
 import fakeShadowMaterial from '@/materials/fakeShadowMaterial'
