@@ -25,12 +25,15 @@ export default class Skeletons {
 
         this.group = new Group()
 
-        this.count = 10
+        this.count = 3
         this.list = []
        
     }
 
     add (position: Vector3) {
+
+        if (this.list.length >= this.count) return
+        
         const model = SkeletonUtils.clone(this.model)
         const skeleton = new Skeleton(model, this.animations,this.texture)
         skeleton.origin.copy(position)
@@ -44,7 +47,7 @@ export default class Skeletons {
         skeleton.on('die', () => {
             setTimeout(() => {
                 skeleton.respawn()
-            }, 10 * 1000)
+            }, 20 * 1000)
         })
         
         this.group.add(skeleton.main)

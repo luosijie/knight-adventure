@@ -1,9 +1,8 @@
-import { ShaderMaterial, Mesh, Uniform, PlaneGeometry, Vector3 } from 'three'
+import { ShaderMaterial, Mesh, Uniform, PlaneGeometry, Vector3, DoubleSide } from 'three'
 
 
 import vertexShader from '@/shaders/ripple/vertex.glsl'
 import fragmentShader from '@/shaders/ripple/fragment.glsl'
-import { Position } from 'source-map-js'
 
 interface Uniforms {
     [uniform:string]: Uniform
@@ -27,12 +26,14 @@ export default class Ripple {
             vertexShader,
             fragmentShader,
             uniforms: this.uniforms,
-            transparent: true
+            transparent: true,
+            side: DoubleSide
         })
         const geometry = new PlaneGeometry(.8, .8)
         geometry.rotateX(-Math.PI / 2)
-        geometry.translate(0, .02, 0)
-        return new Mesh(geometry, material)
+        geometry.translate(0, .016, 0)
+        const mesh = new Mesh(geometry, material)
+        return mesh
         //
     }
 

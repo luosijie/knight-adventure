@@ -22,7 +22,7 @@ export default class Camera {
 
         this.perspective = this.createCamera(width, height)
 
-        this.radius = 8
+        this.radius = 20
         this.horizontalRadian =   0
         this.verticelRadian = Math.PI / 180 * 65
     }
@@ -57,7 +57,7 @@ export default class Camera {
         // this.radius += Math.sign(controls.scroll.delta) * .5
         this.radius += controls.scroll.delta / 100
 
-        if (this.radius > 30) this.radius = 30
+        if (this.radius > 100) this.radius = 100
         if (this.radius < 5) this.radius = 5
 
 

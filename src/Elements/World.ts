@@ -1,4 +1,4 @@
-import { AmbientLight, ArrowHelper, AxesHelper, Clock, DirectionalLight, Fog, Mesh, PCFSoftShadowMap, Raycaster, Scene, SRGBColorSpace, Vector2, WebGLRenderer } from 'three'
+import { AmbientLight, ArrowHelper, AxesHelper, CameraHelper, Clock, DirectionalLight, Fog, Mesh, PCFSoftShadowMap, Raycaster, Scene, SRGBColorSpace, Vector2, WebGLRenderer } from 'three'
 import Stats from 'stats.js'
 
 import Camera from './Camera'
@@ -107,12 +107,7 @@ export default class World {
     private createLight () {
         const light = new DirectionalLight('#ffffff', 1.)
         light.position.set(1, 3, -1)
-        light.castShadow = true
-        light.shadow.mapSize.width = 512
-        light.shadow.mapSize.height = 512
-        light.shadow.autoUpdate = true
-        light.shadow.camera.near = .1
-        light.shadow.camera.far = 5000
+
 
         return light
     }
@@ -131,10 +126,6 @@ export default class World {
 
         this.initControls()
 
-        if (global.isDev) {
-            const axesHelper = new AxesHelper(50)
-            this.scene.add(axesHelper)
-        }
     }
 
     private initControls() {
@@ -167,16 +158,14 @@ export default class World {
     private createRenderer () {
         const renderer = new WebGLRenderer({ 
             canvas: this.canvas,
-            antialias: true,  
+            // antialias: true,  
+            powerPreference: 'high-performance',
             alpha: true 
         })
         renderer.setSize( global.width, global.height)
         renderer.setAnimationLoop( this.render.bind(this) )
         renderer.setPixelRatio(global.pixelRatio)
         renderer.outputColorSpace = SRGBColorSpace
-
-        renderer.shadowMap.enabled = true
-        renderer.shadowMap.type = PCFSoftShadowMap
 
 
         renderer.outputColorSpace = SRGBColorSpace
@@ -230,15 +219,6 @@ export default class World {
                     this.navmesh = e
                     global.pathFinder.init(e)
                 }
-
-                
-
-                e.castShadow = true
-
-                if (e.name === 'ground' || e.name.includes('rock')) {
-                    e.receiveShadow = true
-                }
-
                 e.material = defaultMaterial
             }
         })

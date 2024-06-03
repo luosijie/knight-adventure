@@ -34,12 +34,16 @@ loader.onFileLoaded(() => {
 
 loader.onLoadEnd(async resources => {
     await initRecastNavigation()
-    gsap.to('.loading', { opacity: 0, onComplete: () => {
-        const canvas = document.querySelector('canvas')
-        if (canvas) {
-            world = new World(canvas, resources)
-        }
-    } })
+    const canvas = document.querySelector('canvas')
+    if (canvas) {
+        world = new World(canvas, resources)
+        const tl = gsap.timeline()
+        tl.to('.loading', { opacity: 0, duration: 1})
+        tl.to('.canvas-container canvas', {opacity: 1, duration: 1})
+        tl.to(world.camera, {radius: 6, duration: 5})
+    }
+
+    
 
 })
 

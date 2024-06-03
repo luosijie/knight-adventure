@@ -14,7 +14,7 @@ export default class Skeleton extends Character {
 
     constructor (model: any,animations: any, texture: Texture) {
 
-        super(model, animations, texture, { scale: .18, basicLife: 20 })
+        super(model, animations, texture, { scale: .18, basicLife: 20, castShadow: false })
 
         this.origin = new Vector3()
         this.agent = null

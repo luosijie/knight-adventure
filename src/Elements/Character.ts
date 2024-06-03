@@ -21,6 +21,7 @@ export interface Config {
     scale?: number
     basicLife?: number
     demage?: number
+    castShadow?: boolean
 }
 
 interface Next {
@@ -55,6 +56,7 @@ export default class Character extends EventEmitter {
     basicLife: number
     life: number
     demage: number
+    castShadow: boolean
 
 
     liefbar: Mesh
@@ -99,6 +101,7 @@ export default class Character extends EventEmitter {
         this.basicLife = config.basicLife || 100
         this.life = config.basicLife || 100
         this.demage = config.demage || 1
+        this.castShadow = config.castShadow === undefined ? true : true
         
         this.range = 2
         
@@ -133,7 +136,7 @@ export default class Character extends EventEmitter {
         this.walking = false
 
         this.speeds = {
-            Forward: .01,
+            Forward: .8,
             Backward: .01,
             Rotation: .02
         }
@@ -215,7 +218,7 @@ export default class Character extends EventEmitter {
 
         body.traverse((e:any) => {
             if (e instanceof SkinnedMesh || e instanceof Mesh) {
-                e.castShadow = true
+                e.castShadow = this.castShadow
                 if (e.name === 'Skeleton_Shield') {
                     // e.position.copy(new Vector3())
                     e.scale.copy(new Vector3(1, 1, 1))
@@ -333,18 +336,19 @@ export default class Character extends EventEmitter {
 
     animate () {
     
-        this.animationMixer.update(.02)
+        this.animationMixer.update(global.time.delta)
        
         if (this.next) {
             this.setAction(this.actions.Walking)
             this.next.dist = this.main.position.distanceTo(this.next.position)
       
 
-            if (this.next.dist < this.speeds.Forward) {
+            if (this.next.dist < global.time.delta * this.speeds.Forward) {
                 this.main.position.copy(this.next.position)
                 this.setNext(this.path.shift())
             } else {
-                this.main.position.add(this.next.dir.clone().multiplyScalar(this.speeds.Forward))
+                this.main.position.add(this.next.dir.clone().multiplyScalar(global.time.delta * this.speeds.Forward))
+                // this.main.position.lerp(this.next.position, global.time.delta * .6)
                 this.main.quaternion.slerp(this.next.quaternion, .06)
             }
 

@@ -1,7 +1,7 @@
-import { MeshStandardMaterial, Texture, Uniform } from 'three'
-import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
-import vertexShader from '@/shaders/default/vertex.glsl'
-import fragmentShader from '@/shaders/default/fragment.glsl'
+import { MeshStandardMaterial, Texture } from 'three'
+// import CustomShaderMaterial from 'three-custom-shader-material/vanilla'
+// import vertexShader from '@/shaders/default/vertex.glsl'
+// import fragmentShader from '@/shaders/default/fragment.glsl'
 
 export default function (texture: Texture) {
     // const matarial = new CustomShaderMaterial({
